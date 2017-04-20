@@ -25,4 +25,8 @@ class ApplicationController < ActionController::Base
       redirect_to cats_url
     end
   end
+
+  def not_logged_in?
+    redirect_to cats_url unless current_user
+  end
 end

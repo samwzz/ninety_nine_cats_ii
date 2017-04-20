@@ -1,4 +1,7 @@
 class CatRentalRequestsController < ApplicationController
+  before_action :owner?, only: [:approve, :deny]
+  before_action :not_logged_in?, only: [:create, :new]
+
   def approve
     current_cat_rental_request.approve!
     redirect_to cat_url(current_cat)
@@ -6,7 +9,7 @@ class CatRentalRequestsController < ApplicationController
 
   def create
     @rental_request = CatRentalRequest.new(cat_rental_request_params)
-    if @rental_request.save
+    if @rental_request.save!
       redirect_to cat_url(@rental_request.cat)
     else
       flash.now[:errors] = @rental_request.errors.full_messages
@@ -24,6 +27,7 @@ class CatRentalRequestsController < ApplicationController
   end
 
   private
+
   def current_cat_rental_request
     @rental_request ||=
       CatRentalRequest.includes(:cat).find(params[:id])
@@ -35,6 +39,11 @@ class CatRentalRequestsController < ApplicationController
 
   def cat_rental_request_params
     params.require(:cat_rental_request)
-      .permit(:cat_id, :end_date, :start_date, :status)
+      .permit(:cat_id, :end_date, :start_date, :status, :user_id)
+  end
+
+  def owner?
+    redirect_to cat_url(params[:id]) if current_user.nil? ||
+      current_user.cats.none? { |cat| cat.id == params[:id].to_i }
   end
 end
